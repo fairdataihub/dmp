@@ -52,7 +52,7 @@ const logout = async () => {
           @click="toggleSidebar"
         />
 
-        <NuxtLink to="/" class="flex text-2xl font-bold"> Nuxt App </NuxtLink>
+        <NuxtLink to="/" class="flex text-2xl font-bold"></NuxtLink>
       </div>
 
       <!-- User Menu (Inbox, Docs, Settings) -->

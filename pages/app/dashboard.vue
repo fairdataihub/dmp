@@ -24,7 +24,7 @@ useSeoMeta({
       >
         <div>
           <h1 class="text-2xl font-bold">Dashboard</h1>
-
+          <dmppage></dmppage>
           <p class="text-gray-600 dark:text-gray-400">Manage your app here</p>
         </div>
       </div>
