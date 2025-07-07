@@ -1,173 +1,113 @@
 <script setup lang="ts">
-import { useState } from '#imports'
-import { ref, reactive, onMounted, toRaw } from 'vue'
+import { ref, computed, watch } from 'vue'
+import { useRouter, useState } from '#imports'
+import type { DmpElement } from '~/server/utils/splitMdByElements'
+
 const router = useRouter()
-const dmpState = useState('dmpData')
 
-// This will hold arrays of cards per top-level element
-const pagedElements = reactive<{ title: string; content: string }[][]>([])
+// Global shared state
+const dmpState = useState<DmpElement[]>('dmpData')
+const dmpIndex = useState<number>('dmpIndex')
+const assignedDmps = useState<string[]>('assignedDmps')
 
-const showEvaluation = ref(false)
-const currentPage = ref(0) // 0-based page index
+// Evaluation store per DMP
+const evaluationsPerDmp = useState<any[][][]>('evaluationsPerDmp', () => [])
+const evaluations = useState<any[][]>('evaluations', () => [])
+const currentPage = useState<number>('currentPage', () => 0)
 
-interface ElementDetail {
-  title: string;
-  description: string;
-}
-interface ElementWithItems {
-  [key: string]: ElementDetail;
-}
-interface ElementSimple {
-  description: string;
-}
-interface Llama3Data {
-  [key: string]: ElementSimple | ElementWithItems;
-}
-interface DmpResponseData {
-  llama3: Llama3Data;
-}
-interface DmpResponse {
-  data: DmpResponseData;
-  message: string;
-}
-interface DmpState {
-  response: DmpResponse;
-}
-
-const scoreOptions = [1, 2, 3, 4, 5]
-const errorTypes = [
-  'Spelling/grammar',
-  'Technical inaccuracy',
-  'Missing content',
-  'Formatting issue',
-  'Unclear explanation',
-  'Other'
-]
-
-// Evaluations are now nested per page and per card in page
-const evaluations = reactive<
-  {
-    techCorrectScore: number | undefined
-    completenessScore: number | undefined
-    satisfactionScore: number | undefined
-    selectedErrors: string[]
-    additionalComments: string
-    otherError: string
-  }[][]
->([])
-
-function formatContent(raw: string): string {
-  const lines = raw.trim().split('\n').filter(line => line.trim() !== '')
-  let html = ''
-  for (let line of lines) {
-    line = line.trim()
-    if (/^Element \d+:/.test(line)) {
-      html += `<h3 class="text-primary-600 text-lg font-semibold mb-2">${line}</h3>`
-    } else if (/^Element \d+-[a-zA-Z]:/.test(line)) {
-      html += `<h4 class="text-gray-700 text-base font-semibold mb-1">${line}</h4>`
-    } else {
-      html += `<p class="text-gray-700 text-sm leading-relaxed mb-1">${line}</p>`
-    }
+// Group content
+const groupedByTitle = computed(() => {
+  const grouped: Record<string, DmpElement[]> = {}
+  for (const el of dmpState.value ?? []) {
+    if (!grouped[el.title]) grouped[el.title] = []
+    grouped[el.title].push(el)
   }
-  return html
-}
-
-onMounted(() => {
-  const rawDmp = toRaw(dmpState.value) as DmpState
-  const llama3 = rawDmp.response.data.llama3
-
-  // For each top-level element, create an array of cards (1 or multiple sub-items)
-  for (const [elementTitle, elementContent] of Object.entries(llama3)) {
-    const cardsForThisElement: { title: string; content: string }[] = []
-
-    if ('description' in elementContent) {
-      // No sub-items, just push one card
-      cardsForThisElement.push({
-        title: '',
-        content: `${elementTitle}\n\n${elementContent.description}`,
-      })
-    } else {
-      // Has sub-items: create a card for each
-      const subItems = Object.entries(elementContent)
-      let i = 0
-      for (const [, subItem] of subItems) {
-        const suffix = String.fromCharCode(97 + i) // 'a', 'b', 'c' ...
-        const label = i === 0 ? `${elementTitle}\n\n` : ''
-        cardsForThisElement.push({
-          title: '',
-          content: `${label}Element ${elementTitle.match(/\d+/)}-${suffix}: ${
-            (subItem as ElementDetail).title
-          }\n\n${(subItem as ElementDetail).description}`,
-        })
-        i++
-      }
-    }
-    pagedElements.push(cardsForThisElement)
-  }
-
-  // Initialize evaluations array with the same structure as pagedElements
-  for (const page of pagedElements) {
-    const evalsForPage = page.map(() => ({
-      techCorrectScore: undefined,
-      completenessScore: undefined,
-      satisfactionScore: undefined,
-      selectedErrors: [],
-      additionalComments: '',
-      otherError: '',
-    }))
-    evaluations.push(evalsForPage)
-  }
-
-  showEvaluation.value = true
+  return grouped
 })
 
-// Pagination controls
-function prevPage() {
-  if (currentPage.value > 0) currentPage.value--
-}
-function nextPage() {
-  if (currentPage.value < pagedElements.length - 1) currentPage.value++
+const titles = computed(() => Object.keys(groupedByTitle.value))
+const currentTitle = computed(() => titles.value[currentPage.value])
+const currentElements = computed(() => groupedByTitle.value[currentTitle.value] || [])
+
+const scoreOptions = [1, 2, 3, 4, 5]
+const errorTypes = ['Grammar', 'Incorrect Fact', 'Incomplete', 'Off-topic', 'Other']
+
+// Create fresh blank data
+function createBlankEvaluation(): any[][] {
+  return titles.value.map(title =>
+    (groupedByTitle.value[title] || []).map(() => ({
+      techCorrectScore: null,
+      completenessScore: null,
+      satisfactionScore: null,
+      selectedErrors: [],
+      otherError: '',
+      additionalComments: ''
+    }))
+  )
 }
 
-async function saveEvaluations() {
-  try {
-    // Flatten the nested arrays for sending, if you want keep nested, adjust backend accordingly
-    const flatElements = pagedElements.flat()
-    const flatEvaluations = evaluations.flat()
-    await $fetch('/api/dmp/save-evaluations', {
-      method: 'POST',
-      body: {
-        elements: flatElements,
-        evaluations: flatEvaluations,
-      },
-    })
-    alert('Evaluations saved successfully!')
-    router.push('thank-you')
-  } catch (error) {
-    console.error(error)
-    alert('Failed to save evaluations.')
+// Whenever content is ready (titles), load or create eval
+watch(titles, () => {
+  if (!titles.value.length) return
+
+  const saved = evaluationsPerDmp.value[dmpIndex.value]
+  if (saved) {
+    evaluations.value = JSON.parse(JSON.stringify(saved))
+  } else {
+    evaluations.value = createBlankEvaluation()
+    evaluationsPerDmp.value[dmpIndex.value] = JSON.parse(JSON.stringify(evaluations.value))
+  }
+}, { immediate: true })
+
+function saveCurrentEvaluation() {
+  evaluationsPerDmp.value[dmpIndex.value] = JSON.parse(JSON.stringify(evaluations.value))
+}
+
+function formatContent(content: string) {
+  return content.replace(/\n/g, '<br>')
+}
+
+function nextPage() {
+  if (currentPage.value === titles.value.length - 1) {
+    saveCurrentEvaluation()
+    router.push('/app/overall')
+  } else {
+    currentPage.value++
+  }
+}
+
+function prevPage() {
+  if (currentPage.value === 0) {
+    saveCurrentEvaluation()
+    router.push('/app/preview')
+  } else {
+    currentPage.value--
   }
 }
 </script>
 
 <template>
-  <div v-if="showEvaluation && pagedElements.length > 0" class="space-y-6 mt-10">
-    <div v-if="currentPage === 0" class="text-gray-700 text-lg mb-4">
-      Review and evaluate each of the 12 sections generated by an LLM, then click <strong>“Next”</strong> to continue.
-      You can go back at any time by clicking <strong>“Previous”</strong> to revise your responses.
+  <div v-if="titles.length && currentElements.length" class="space-y-6 mt-10">
+    <div class="text-gray-700 text-lg mb-4">
+      <strong>{{ currentTitle }}</strong>
     </div>
+
     <UCard
-      v-for="(element, index) in pagedElements[currentPage]"
+      v-for="(element, index) in currentElements"
       :key="index"
-      class="p-4 bg-gray-50"
+      class="p-4 bg-gray-50 bg-white"
     >
       <div class="flex gap-6">
         <div class="w-1/2">
-          <pre v-html="formatContent(element.content)"></pre>
+          <h3 v-if="element.subtitle" class="font-medium text-gray-700 mb-2 text-lg">
+            {{ element.subtitle }}
+          </h3>
+          <div v-html="formatContent(element.content)" class="whitespace-pre-wrap text-base" />
         </div>
+
         <div class="w-1/2 space-y-4">
           <div class="flex items-center space-x-4">
-            <label class="font-semibold w-3/4">1. How technically correct is the information?</label>
+            <label class="font-semibold w-3/4">1. How technically correct is the information?<span class="text-red-500">*</span></label>
             <USelect
               v-model="evaluations[currentPage][index].techCorrectScore"
               :items="scoreOptions"
@@ -176,7 +116,7 @@ async function saveEvaluations() {
           </div>
 
           <div class="flex items-center space-x-4">
-            <label class="font-semibold w-3/4">2. Does the section fully address the required Element?</label>
+            <label class="font-semibold w-3/4">2. Does the section fully address the required Element?<span class="text-red-500">*</span></label>
             <USelect
               v-model="evaluations[currentPage][index].completenessScore"
               :items="scoreOptions"
@@ -185,7 +125,7 @@ async function saveEvaluations() {
           </div>
 
           <div class="flex items-center space-x-4">
-            <label class="font-semibold w-3/4">3. How satisfied are you with the response?</label>
+            <label class="font-semibold w-3/4">3. How satisfied are you with the response?<span class="text-red-500">*</span></label>
             <USelect
               v-model="evaluations[currentPage][index].satisfactionScore"
               :items="scoreOptions"
@@ -194,7 +134,7 @@ async function saveEvaluations() {
           </div>
 
           <div>
-            <label class="font-semibold block mb-2">4. What type of error(s) did you find?</label>
+            <label class="font-semibold block mb-2">4. What type of error(s) did you find?<span class="text-red-500">*</span></label>
             <div class="flex gap-x-4 items-start">
               <USelect
                 v-model="evaluations[currentPage][index].selectedErrors"
@@ -214,34 +154,39 @@ async function saveEvaluations() {
 
           <div>
             <label class="font-semibold block mb-1">5. Provide additional comments (optional)</label>
-            <UTextarea v-model="evaluations[currentPage][index].additionalComments" class="w-full" />
+            <UTextarea
+              v-model="evaluations[currentPage][index].additionalComments"
+              class="w-full"
+            />
           </div>
         </div>
       </div>
     </UCard>
 
-    <div class="flex justify-between mt-6">
-      <UButton icon="i-lucide-arrow-left" size="xl" color="primary" @click="prevPage" :disabled="currentPage === 0">Previous</UButton>
-      <div class="mb-4 text-center font-semibold">
-          Page {{ currentPage + 1 }} / {{ pagedElements.length }}
-        </div>
-      <UButton trailing-icon="i-lucide-arrow-right" size="xl" color="primary" @click="nextPage" :disabled="currentPage === pagedElements.length - 1">
+    <div class="flex justify-between mt-6 mb-6 items-center">
+      <UButton 
+        icon="i-lucide-arrow-left" 
+        size="xl" 
+        color="primary" 
+        @click="prevPage"
+        class="w-30 flex items-center justify-center"
+      >
+        Previous
+      </UButton>
+
+      <div class="text-center font-semibold">
+        Page {{ currentPage + 1 }} / {{ titles.length }}
+      </div>
+
+      <UButton
+        trailing-icon="i-lucide-arrow-right"
+        size="xl"
+        color="primary"
+        @click="nextPage"
+        class="w-30 flex items-center justify-center"
+      >
         Next
       </UButton>
     </div>
-
-    <div
-  v-if="currentPage === pagedElements.length - 1"
-  class="flex justify-end mt-8 space-x-4"
->
-<UButton
-  class="bg-emerald-400 hover:bg-emerald-500 text-white"
-  @click="saveEvaluations"
->
-  Save Evaluations
-</UButton>
-
-</div>
-
   </div>
 </template>
