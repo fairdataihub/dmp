@@ -1,0 +1,16 @@
+Participant number,DMP1,DMP2,DMP3
+0217,Human_4,Llama_10,Gpt_10
+0483,Llama_1,Human_2,Gpt_9
+1379,Human_7,Gpt_6,Llama_6
+2205,Gpt_3,Human_9,Llama_5
+3091,Gpt_1,Human_1,Llama_3
+4126,Human_6,Gpt_5,Llama_9
+5340,Human_8,Llama_4,Gpt_4
+6078,Human_3,Llama_7,Gpt_8
+7124,Gpt_2,Llama_2,Human_5
+8053,Gpt_7,Llama_8,Human_10
+8296,Llama_7,Gpt_7,Human_3
+9012,Llama_8,Gpt_1,Human_5
+9185,Gpt_9,Human_9,Llama_6
+9427,Llama_5,Gpt_3,Human_2
+9963,Llama_4,Gpt_4,Human_1
