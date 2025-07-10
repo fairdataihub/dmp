@@ -18,8 +18,9 @@ async function loadDmpMd(index: number) {
 
   const name = assignedDmps.value[index]
   try {
-    const module = await import(`~/assets/dmp/${name}.md?raw`)
-    parsedElements.value = splitMdByElements(module.default)
+    const response = await fetch(`/assets/dmp/${name}.md`)
+    const markdown = await response.text()
+    parsedElements.value = splitMdByElements(markdown)
   } catch (err) {
     console.error(`Error loading ${name}.md:`, err)
     parsedElements.value = []
