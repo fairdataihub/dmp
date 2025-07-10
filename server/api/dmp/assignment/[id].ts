@@ -16,17 +16,18 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Missing participant ID' })
   }
 
-  const csvPath = path.resolve('server/assets/dmp/participant_dmp_assignments.csv')
-  const content = readFileSync(csvPath, 'utf-8')
+  const baseUrl = process.env.BASE_URL || 'http://localhost:3000'
+  const csvUrl = `${baseUrl}/assets/dmp/participant_dmp_assignments.csv`
 
-  const records = parse(content, {
-    columns: true,
-    skip_empty_lines: true
-  }) as AssignmentRow[]
+  const res = await fetch(csvUrl)
+  if (!res.ok) {
+    throw createError({ statusCode: 500, statusMessage: `Failed to fetch CSV: ${res.statusText}` })
+  }
 
+  const csvText = await res.text()
+  const records = parse(csvText, { columns: true, skip_empty_lines: true }) as AssignmentRow[]
 
-  const participant = records.find((r: AssignmentRow) => r['Participant number'] === id)
-
+  const participant = records.find((r) => r['Participant number'] === id)
   if (!participant) {
     throw createError({ statusCode: 404, statusMessage: `Participant ${id} not found.` })
   }
