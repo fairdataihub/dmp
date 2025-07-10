@@ -9,20 +9,21 @@ interface AssignmentRow {
   DMP3: string
 }
 
-export default defineEventHandler((event) => {
+export default defineEventHandler(async (event) => {
   const id = event.context.params?.id
 
   if (!id) {
     throw createError({ statusCode: 400, statusMessage: 'Missing participant ID' })
   }
 
-  const csvPath = path.resolve('assets/dmp/participant_dmp_assignments.csv')
+  const csvPath = path.resolve('server/assets/dmp/participant_dmp_assignments.csv')
   const content = readFileSync(csvPath, 'utf-8')
 
   const records = parse(content, {
     columns: true,
     skip_empty_lines: true
   }) as AssignmentRow[]
+
 
   const participant = records.find((r: AssignmentRow) => r['Participant number'] === id)
 
