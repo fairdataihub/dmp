@@ -4,6 +4,7 @@ import { useRouter, useState } from '#imports'
 import type { DmpElement } from '~/server/utils/splitMdByElements'
 
 const router = useRouter()
+const toast = useToast()
 
 // Global shared state
 const dmpState = useState<DmpElement[]>('dmpData')
@@ -67,7 +68,32 @@ function formatContent(content: string) {
   return content.replace(/\n/g, '<br>')
 }
 
+function isPageValid(): boolean {
+  const items = evaluations.value[currentPage.value]
+  for (const item of items) {
+    if (
+      item.techCorrectScore === null ||
+      item.completenessScore === null ||
+      item.satisfactionScore === null ||
+      item.selectedErrors.length === 0
+    ) {
+      return false
+    }
+  }
+  return true
+}
+
+
 function nextPage() {
+    if (!isPageValid()) {
+    toast.add({
+      title: 'Incomplete Evaluation',
+      description: 'Please complete all required questions before continuing.',
+      icon: 'material-symbols:warning',
+      color: 'warning',
+    })
+    return
+  }
   if (currentPage.value === titles.value.length - 1) {
     saveCurrentEvaluation()
     router.push('/app/overall')
