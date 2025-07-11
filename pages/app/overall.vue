@@ -15,6 +15,10 @@ const currentPage = useState<number>('currentPage')
 // Overall evaluation refs
 const overallSatisfaction = ref<number | null>(null)
 const overallAuthorshipGuess = ref<string | null>(null)
+const overallEvaluationsPerDmp = useState<{ satisfaction: number | null, authorship: string | null }[]>(
+  'overallEvaluationsPerDmp',
+  () => []
+)
 
 // Modal control
 const open = ref(false)
@@ -64,6 +68,20 @@ async function confirmSubmit() {
 }
 
 function goNext() {
+  // Validate required fields
+  const missingSatisfaction = overallSatisfaction.value === null
+  const missingAuthorship = !overallAuthorshipGuess.value
+
+  if (missingSatisfaction || missingAuthorship) {
+    toast.add({
+      title: 'Incomplete',
+      description: 'Please answer all required overall evaluation questions.',
+      icon: 'material-symbols:warning',
+      color: 'warning',
+    })
+    return
+  }
+  saveOverallEvaluation()
   if (dmpIndex.value < assignedDmps.value.length - 1) {
     dmpIndex.value++
     router.push('/app/preview')
@@ -77,6 +95,25 @@ function goPrevious() {
   currentPage.value = lastPageIndex
   router.push('/app/evaluation')
 }
+
+function saveOverallEvaluation() {
+  overallEvaluationsPerDmp.value[dmpIndex.value] = {
+    satisfaction: overallSatisfaction.value,
+    authorship: overallAuthorshipGuess.value
+  }
+}
+
+watch(dmpIndex, () => {
+  const saved = overallEvaluationsPerDmp.value[dmpIndex.value]
+
+  if (saved) {
+    overallSatisfaction.value = saved.satisfaction
+    overallAuthorshipGuess.value = saved.authorship
+  } else {
+    overallSatisfaction.value = null
+    overallAuthorshipGuess.value = null
+  }
+}, { immediate: true })
 </script>
 
 <template>
