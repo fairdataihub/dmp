@@ -26,6 +26,5 @@ const logout = async () => {
   <!-- Dashboard Header -->
   <header
     class="fixed top-0 right-0 left-0 z-10 block w-full border-b border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900"
-  >
-  </header>
+  ></header>
 </template>
