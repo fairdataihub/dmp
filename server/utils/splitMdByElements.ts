@@ -1,57 +1,59 @@
 export interface DmpElement {
-  title: string
-  subtitle: string
-  content: string
+  title: string;
+  content: string;
+  subtitle: string;
 }
 
 function removeAsterisks(text: string): string {
-  return text.replace(/\*\*/g, '')
+  return text.replace(/\*\*/g, "");
 }
 
 export function splitMdByElements(mdContent: string): DmpElement[] {
-  const elementPattern = /\*\*Element\s+(\d+):\s*(.+?)\*\*/g
+  const elementPattern = /\*\*Element\s+(\d+):\s*(.+?)\*\*/g;
 
   // Subtitle pattern:
   // Match lines starting with number + dot + space + bold subtitle (with optional colon)
   // Use (^|[\n\r]) to match start of line or string so first subtitle is matched
-  const subSectionPattern = /(^|\r?\n)(\d+)\.\s*\*\*(.+?):?\*\*\s*([\s\S]*?)(?=(\r?\n\d+\.|\r?\n\*\*Element\s+\d+:|$))/g
+  const subSectionPattern =
+    /(^|\r?\n)(\d+)\.\s*\*\*(.+?):?\*\*\s*([\s\S]*?)(?=(\r?\n\d+\.|\r?\n\*\*Element\s+\d+:|$))/g;
 
-  const elements: DmpElement[] = []
+  const elements: DmpElement[] = [];
 
-  const matches = [...mdContent.matchAll(elementPattern)]
+  const matches = [...mdContent.matchAll(elementPattern)];
 
   for (let i = 0; i < matches.length; i++) {
-    const current = matches[i]
-    const next = matches[i + 1]
+    const current = matches[i];
+    const next = matches[i + 1];
 
-    const fullTitle = `Element ${current[1]}: ${current[2]}`
-    const startIndex = current.index! + current[0].length
-    const endIndex = next?.index ?? mdContent.length
+    const fullTitle = `Element ${current[1]}: ${current[2]}`;
+    const startIndex = current.index! + current[0].length;
+    const endIndex = next?.index ?? mdContent.length;
 
-    const blockContent = mdContent.slice(startIndex, endIndex).trim()
+    const blockContent = mdContent.slice(startIndex, endIndex).trim();
 
-    let foundSubSections = false
+    let foundSubSections = false;
 
     for (const subMatch of blockContent.matchAll(subSectionPattern)) {
-      foundSubSections = true
-      const subtitle = `${subMatch[2]}. ${removeAsterisks(subMatch[3])}:`.trim()
-      const content = removeAsterisks(subMatch[4]).trim()
+      foundSubSections = true;
+      const subtitle =
+        `${subMatch[2]}. ${removeAsterisks(subMatch[3])}:`.trim();
+      const content = removeAsterisks(subMatch[4]).trim();
 
       elements.push({
         title: fullTitle,
-        subtitle,
         content,
-      })
+        subtitle,
+      });
     }
 
     if (!foundSubSections) {
       elements.push({
         title: fullTitle,
-        subtitle: '',
         content: removeAsterisks(blockContent),
-      })
+        subtitle: "",
+      });
     }
   }
 
-  return elements
+  return elements;
 }
