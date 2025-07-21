@@ -6,6 +6,7 @@ import type { DmpElement } from "~/server/utils/splitMdByElements";
 const router = useRouter();
 const toast = useToast();
 
+const currentDmpIndex = useState<number>("dmpIndex");
 const overallSatisfaction = ref<number | null>(null);
 const overallAuthorshipGuess = ref<string | null>(null);
 const overallEvaluationsPerDmp = useState<
@@ -222,7 +223,7 @@ async function saveAllEvaluations() {
 <template>
   <div v-if="currentElements.length" class="mt-10 space-y-6">
     <div class="mb-4 text-lg text-gray-700">
-      <strong>Section-wise Evaluation ({{ currentPage + 1 }}/3)</strong>
+      <strong>DMP #{{ currentDmpIndex + 1 }} – Section-wise Evaluation ({{ currentPage + 1 }}/3)</strong>
     </div>
 
     <h1>
