@@ -6,6 +6,19 @@ import type { DmpElement } from "~/server/utils/splitMdByElements";
 const router = useRouter();
 const toast = useToast();
 
+const overallSatisfaction = ref<number | null>(null);
+const overallAuthorshipGuess = ref<string | null>(null);
+const overallEvaluationsPerDmp = useState<
+  { authorship: string | null; satisfaction: number | null }[]
+>("overallEvaluationsPerDmp", () => []);
+
+function saveOverallEvaluation() {
+  overallEvaluationsPerDmp.value[dmpIndex.value] = {
+    authorship: overallAuthorshipGuess.value,
+    satisfaction: overallSatisfaction.value,
+  };
+}
+
 const dmpState = useState<DmpElement[]>("dmpData");
 const dmpIndex = useState<number>("dmpIndex");
 const assignedDmps = useState<string[]>("assignedDmps");
@@ -95,6 +108,22 @@ watch(
   { immediate: true },
 );
 
+watch(
+  dmpIndex,
+  () => {
+    const saved = overallEvaluationsPerDmp.value[dmpIndex.value];
+
+    if (saved) {
+      overallSatisfaction.value = saved.satisfaction;
+      overallAuthorshipGuess.value = saved.authorship;
+    } else {
+      overallSatisfaction.value = null;
+      overallAuthorshipGuess.value = null;
+    }
+  },
+  { immediate: true },
+);
+
 function saveCurrentEvaluation() {
   evaluationsPerDmp.value[dmpIndex.value] = JSON.parse(
     JSON.stringify(evaluations.value),
@@ -106,9 +135,19 @@ function formatContent(content: string) {
 }
 
 function nextPage() {
+  saveCurrentEvaluation();
+
   if (currentPage.value === fixedGroups.value.length - 1) {
-    saveCurrentEvaluation();
-    router.push("/app/overall");
+    // We're on page 3
+    saveOverallEvaluation();
+
+    if (dmpIndex.value < assignedDmps.value.length - 1) {
+      dmpIndex.value++; // Next DMP
+      currentPage.value = 0;
+      router.push("/app/preview");
+    } else {
+      onSubmitClick(); // 🔥 Show modal!
+    }
   } else {
     currentPage.value++;
   }
@@ -128,6 +167,55 @@ function shouldShowTitle(index: number, elements: DmpElement[]) {
   if (index === 0) return true;
 
   return elements[index].title !== elements[index - 1].title;
+}
+
+const isLastPageAndLastDmp = computed(
+  () =>
+    currentPage.value === fixedGroups.value.length - 1 &&
+    dmpIndex.value === assignedDmps.value.length - 1,
+);
+
+const open = ref(false);
+
+function onSubmitClick() {
+  open.value = true;
+}
+
+async function confirmSubmit() {
+  open.value = false;
+  await saveAllEvaluations();
+}
+
+async function saveAllEvaluations() {
+  try {
+    const flatElements = dmpState.value;
+    const flatEvaluations = evaluations.value.flatMap((group) => group);
+    const dmpName = assignedDmps.value[dmpIndex.value];
+
+    const res = await $fetch("/api/dmp/save-evaluation", {
+      body: {
+        dmpName,
+        elements: flatElements,
+        evaluations: flatEvaluations,
+        overallAuthorshipGuess: overallAuthorshipGuess.value,
+        overallSatisfaction: overallSatisfaction.value,
+      },
+      method: "POST",
+    });
+
+    toast.add({
+      title: "Saved",
+      description: res.message || "Evaluation results saved successfully.",
+    });
+
+    router.push("/app/thank-you");
+  } catch (error) {
+    console.error("Save failed:", error);
+    toast.add({
+      title: "Error",
+      description: "Failed to save evaluations. Please try again.",
+    });
+  }
 }
 </script>
 
@@ -260,6 +348,60 @@ function shouldShowTitle(index: number, elements: DmpElement[]) {
       </div>
     </UCard>
 
+    <UCard
+      v-if="currentPage === 2"
+      class="space-y-8 bg-gray-50 bg-white px-2 pt-6"
+    >
+      <div class="mb-4 text-center text-xl font-bold">Overall Evaluation</div>
+
+      <!-- Question 1 -->
+      <div class="mb-6 flex gap-x-8">
+        <div class="w-1/2">
+          <label class="w-3/4 font-semibold">
+            1. How satisfied were you with this DMP as a whole?
+            <span class="text-red-500">*</span>
+          </label>
+        </div>
+
+        <div class="w-1/2">
+          <USelect
+            v-model="overallSatisfaction"
+            :items="[
+              { label: 'Very Dissatisfied', value: 1 },
+              { label: 'Dissatisfied', value: 2 },
+              { label: 'Neutral', value: 3 },
+              { label: 'Satisfied', value: 4 },
+              { label: 'Very Satisfied', value: 5 },
+            ]"
+            placeholder="Select satisfaction level"
+            class="w-96"
+          />
+        </div>
+      </div>
+
+      <!-- Question 2 -->
+      <div class="flex gap-x-8">
+        <div class="w-1/2">
+          <label class="w-3/4 font-semibold">
+            2. Who do you think wrote this DMP?
+            <span class="text-red-500">*</span>
+          </label>
+        </div>
+
+        <div class="w-1/2">
+          <USelect
+            v-model="overallAuthorshipGuess"
+            :items="[
+              { label: 'Human', value: 'Human' },
+              { label: 'LLM', value: 'LLM' },
+            ]"
+            placeholder="Select one"
+            class="w-96"
+          />
+        </div>
+      </div>
+    </UCard>
+
     <div class="mt-6 mb-6 flex items-center justify-between">
       <UButton
         icon="i-lucide-arrow-left"
@@ -272,14 +414,30 @@ function shouldShowTitle(index: number, elements: DmpElement[]) {
       </UButton>
 
       <UButton
-        trailing-icon="i-lucide-arrow-right"
+        :trailing-icon="isLastPageAndLastDmp ? '' : 'i-lucide-arrow-right'"
         size="xl"
         color="primary"
         class="flex w-30 items-center justify-center"
         @click="nextPage"
       >
-        Next
+        {{ isLastPageAndLastDmp ? "Submit" : "Next" }}
       </UButton>
     </div>
+
+    <UModal v-model:open="open" trap-focus>
+      <template #content>
+        <div class="w-120 max-w-full p-6">
+          <p class="mb-6">Are you sure you want to submit your evaluations?</p>
+
+          <div class="flex justify-end space-x-4">
+            <UButton color="primary" @click="confirmSubmit"
+              >Yes, Submit</UButton
+            >
+
+            <UButton color="neutral" @click="open = false">Cancel</UButton>
+          </div>
+        </div>
+      </template>
+    </UModal>
   </div>
 </template>

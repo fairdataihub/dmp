@@ -56,7 +56,10 @@ function goBack() {
     router.push("/app/background");
   } else {
     currentDmpIndex.value--;
-    router.push("/app/overall");
+    const currentPage = useState<number>("currentPage");
+
+    currentPage.value = 2; // Last page (page 3) of evaluation
+    router.push("/app/evaluation");
   }
 }
 
