@@ -1,8 +1,7 @@
 **Element 1: Data Type**
 
 1. **Types and amount of scientific data expected to be generated in the project:**  
-    This project will perform secondary data analysis on kidney magnetic resonance imaging (MRI) data to determine the parenchymal kidney volume. Analysis will be done on the subjects with available imaging data within the database of Genotypes and Phenotypes (dbGaP). The following dataset will be produced during this project:
-   • Clinical dataset of the estimated kidney volume.
+   This project will perform secondary data analysis on kidney magnetic resonance imaging (MRI) data to determine the parenchymal kidney volume. Analysis will be done on the subjects with available imaging data within the database of Genotypes and Phenotypes (dbGaP). The following dataset will be produced during this project: Clinical dataset of the estimated kidney volume.
 
 2. **Scientific data that will be preserved and shared, and the rationale for doing so:**  
    This secondary data analysis is not generating new data measurements. The data are already available through the dbGaP. The kidney volume dataset produced from the methods developed during this study will be made available for further research.
