@@ -132,7 +132,12 @@ function saveCurrentEvaluation() {
 }
 
 function formatContent(content: string) {
-  return content.replace(/\n/g, "<br>");
+  // Replace multiple newlines with a single <br> (for paragraphs)
+  // Replace single newlines or newlines with surrounding whitespace with space
+  return content
+    .replace(/\r/g, "") // remove carriage returns
+    .replace(/\n{2,}/g, "<br><br>") // preserve paragraph breaks
+    .replace(/\s*\n\s*/g, " "); // collapse line breaks inside paragraphs
 }
 
 function nextPage() {
