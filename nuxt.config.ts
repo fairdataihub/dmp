@@ -18,4 +18,7 @@ export default defineNuxtConfig({
     },
     sessionPassword: process.env.NUXT_SESSION_PASSWORD || "",
   },
+  ui: {
+    colorMode: false,
+  },
 });
