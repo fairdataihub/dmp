@@ -11,7 +11,7 @@ function goToNext() {
 
 <template>
   <UCard variant="subtle" class="bg-white">
-    <div class="px-60">
+    <div class="px-4 sm:px-10 md:px-20 lg:px-40 xl:px-60">
       <div class="mb-6 flex justify-center text-3xl">
         <strong>Introduction</strong>
       </div>
@@ -51,16 +51,25 @@ function goToNext() {
             quality of each of their 12 sections based on standardized criteria,
             including technical accuracy, completeness, and clarity. You may
             also provide qualitative feedback and point out any issues you
-            observe.
+            observe. Each one may have been written by a human or an LLM, and
+            you will be asked to make a guess which it is.
           </li>
         </ul>
 
         <p>
+          Your answers will be saved as you go to a new page. You can go back
+          and change answers at any time. Once you submit on the final page,
+          your answers cannot be changed anymore.
+        </p>
+
+        <p>
           Your participation plays a vital role in shaping the future of
-          AI-assisted research infrastructure. This study has received an IRB
-          exemption. No personal information will be collected. All responses
-          will be anonymous and used solely for research purposes, in accordance
-          with ethical and regulatory standards.
+          LLM-assisted research infrastructure. This study was determined to not
+          meet the definition of human subjects research by the UC Davis IRB
+          (FWA No: 00004557, IORG: 0000251) . No identifiable information will
+          be collected. All responses will be anonymous and used solely for
+          product development research, in accordance with ethical and
+          regulatory standards.
         </p>
       </div>
 

@@ -46,16 +46,45 @@ const helpTexts = [
   "Describe how compliance with this Plan will be monitored and managed, frequency of oversight, and by whom at your institution (e.g., titles, roles)",
 ];
 
-// Fixed manual pagination structure
-const fixedGroups = computed(() => {
+const groupedElements = computed(() => {
   const elements = dmpState.value || [];
+  const groups: { title: string; group: DmpElement[] }[] = [];
 
-  return [
-    elements.slice(0, 5), // Page 1: ele1a/b/c, ele2, ele3
-    elements.slice(5, 11), // Page 2: ele4a/b/c, ele5a/b/c
-    elements.slice(11), // Page 3: ele6
-  ];
+  for (const el of elements) {
+    const existing = groups.find((g) => g.title === el.title);
+    if (existing) {
+      existing.group.push(el);
+    } else {
+      groups.push({ title: el.title, group: [el] });
+    }
+  }
+
+  return groups;
 });
+
+const fixedGroups = computed(() => {
+  const groups = groupedElements.value;
+
+  // Separate Element 6
+  const ele6Index = groups.findIndex((g) =>
+    g.title.startsWith("Element 6: Oversight"),
+  );
+
+  const ele6 = ele6Index !== -1 ? groups.splice(ele6Index, 1)[0] : null;
+
+  // Now paginate rest in chunks of 3
+  const paginated: typeof groupedElements.value[] = [];
+  for (let i = 0; i < groups.length; i += 3) {
+    paginated.push(groups.slice(i, i + 3));
+  }
+
+  if (ele6) {
+    paginated.push([ele6]); // Page 3: Element 6 alone
+  }
+
+  return paginated;
+});
+
 
 const currentElements = computed(
   () => fixedGroups.value[currentPage.value] || [],
@@ -63,11 +92,15 @@ const currentElements = computed(
 
 const scoreOptions = [1, 2, 3, 4, 5];
 const errorTypes = [
-  "Grammar",
-  "Incorrect Fact",
-  "Incomplete",
-  "Off-topic",
-  "Other",
+  "Accuracy--Contains incorrect or misleading information, such as mentioning a repository that does not exist",
+  "Completeness--Missing something that is required for the Element",
+  "Clarity--Uses vague language, such as saying data will be shared but not providing details",
+  "Coherence--Information not presented in a logical, organized, and well-connected way",
+  "Compliance--Plan would not be in compliance with Funder Policy",
+  "Fluency--Contains spelling, punctuation, or grammar issues",
+  "Best Practice--Contains plan choices that aren’t recommended",
+  "Other--Please mention in comments",
+  "None--No errors seen",
 ];
 
 function globalIndex(page: number, localIndex: number): number {
@@ -168,12 +201,27 @@ function prevPage() {
   }
 }
 
-// Show title if it's the first element or title differs from previous
-function shouldShowTitle(index: number, elements: DmpElement[]) {
-  if (index === 0) return true;
+function flattenedIndex(groupIndex: number, subIndex: number): number {
+  let index = 0;
 
-  return elements[index].title !== elements[index - 1].title;
+  // Count all sub-elements from previous pages
+  for (let p = 0; p < currentPage.value; p++) {
+    for (const group of fixedGroups.value[p]) {
+      index += group.group.length;
+    }
+  }
+
+  // Add sub-elements before current subEl in current page
+  for (let g = 0; g < groupIndex; g++) {
+    index += currentElements.value[g].group.length;
+  }
+
+  // Add offset within current group
+  index += subIndex;
+
+  return index;
 }
+
 
 const isLastPageAndLastDmp = computed(
   () =>
@@ -236,130 +284,91 @@ async function saveAllEvaluations() {
       is provided again to facilitate your evaluation.
     </h1>
 
-    <UCard
-      v-for="(element, index) in currentElements"
-      :key="index"
-      class="bg-gray-50 bg-white p-4"
-    >
-      <div v-if="evaluations[currentPage]?.[index]" class="flex gap-6">
-        <div class="w-1/2">
-          <h3 class="mb-2 text-xl font-semibold text-gray-800">
-            <template v-if="shouldShowTitle(index, currentElements)">
-              {{ element.title }}<br />
+<UCard
+  v-for="(group, groupIndex) in currentElements"
+  :key="groupIndex"
+  class="bg-gray-50 bg-white p-4"
+>
+  <div v-if="evaluations[currentPage]?.[groupIndex]" class="flex gap-6">
+    <div class="w-1/2">
+      <h3 class="mb-2 text-xl font-semibold text-gray-800">
+        {{ group.title }}
+      </h3>
 
-              <span
-                v-if="element.subtitle"
-                class="ml-1 text-base font-semibold text-gray-800"
-              >
-                {{ element.subtitle }}
-              </span>
-            </template>
+      <div
+        v-for="(subEl, subIndex) in group.group"
+        :key="subIndex"
+        class="mb-4"
+      >
+        <div class="text-base font-semibold text-gray-800">
+          {{ subEl.subtitle }}
+        </div>
 
-            <template v-else-if="element.subtitle">
-              <span class="text-base font-semibold text-gray-800">
-                {{ element.subtitle }}
-              </span>
-            </template>
-          </h3>
+        <div class="mb-2 text-sm italic text-gray-600">
+          ({{ helpTexts[flattenedIndex(groupIndex, subIndex)] }})
+        </div>
 
-          <div class="mb-3 text-sm text-gray-600 italic">
-            ({{ helpTexts[globalIndex(currentPage, index)] }})
-          </div>
+        <div
+          class="text-base whitespace-pre-wrap"
+          v-html="formatContent(subEl.content)"
+        />
+      </div>
+    </div>
 
-          <div
-            class="text-base whitespace-pre-wrap"
-            v-html="formatContent(element.content)"
+    <div class="w-1/2 space-y-4">
+      <!-- Same evaluation UI for the entire group -->
+      <div class="flex items-center space-x-4">
+        <label class="w-3/4 font-semibold">
+          1. How satisfied are you with the response to this Element?
+          <span class="text-red-500">*</span>
+        </label>
+
+        <USelect
+          v-model="evaluations[currentPage][groupIndex].techCorrectScore"
+          :items="scoreOptions"
+          class="w-45"
+        />
+      </div>
+
+      <div>
+        <label class="mb-2 block font-semibold">
+           2. What type of errors did you find, if any (select all that apply)?
+          <span class="text-red-500">*</span>
+        </label>
+
+        <div class="flex items-start gap-x-4">
+          <USelect
+            v-model="evaluations[currentPage][groupIndex].selectedErrors"
+            :items="errorTypes"
+            multiple
+            placeholder="Select error types"
+            class="w-full"
           />
         </div>
-
-        <div class="w-1/2 space-y-4">
-          <div class="flex items-center space-x-4">
-            <label class="w-3/4 font-semibold">
-              1. How technically correct is the information?
-              <span class="text-red-500">*</span>
-            </label>
-
-            <USelect
-              v-model="evaluations[currentPage][index].techCorrectScore"
-              :items="scoreOptions"
-              class="w-25"
-            />
-          </div>
-
-          <div class="flex items-center space-x-4">
-            <label class="w-3/4 font-semibold">
-              2. Does the section fully address the required Element?
-              <span class="text-red-500">*</span>
-            </label>
-
-            <USelect
-              v-model="evaluations[currentPage][index].completenessScore"
-              :items="scoreOptions"
-              class="w-25"
-            />
-          </div>
-
-          <div class="flex items-center space-x-4">
-            <label class="w-3/4 font-semibold">
-              3. How satisfied are you with the response?
-              <span class="text-red-500">*</span>
-            </label>
-
-            <USelect
-              v-model="evaluations[currentPage][index].satisfactionScore"
-              :items="scoreOptions"
-              class="w-25"
-            />
-          </div>
-
-          <div>
-            <label class="mb-2 block font-semibold">
-              4. What type of error(s) did you find?
-              <span class="text-red-500">*</span>
-            </label>
-
-            <div class="flex items-start gap-x-4">
-              <USelect
-                v-model="evaluations[currentPage][index].selectedErrors"
-                :items="errorTypes"
-                multiple
-                placeholder="Select error types"
-                class="w-100"
-              />
-
-              <UInput
-                v-if="
-                  evaluations[currentPage][index].selectedErrors.includes(
-                    'Other',
-                  )
-                "
-                v-model="evaluations[currentPage][index].otherError"
-                placeholder="Specify other error"
-                class="w-100"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label class="mb-1 block font-semibold">
-              5. Provide additional comments (optional)
-            </label>
-
-            <UTextarea
-              v-model="evaluations[currentPage][index].additionalComments"
-              class="w-full"
-            />
-          </div>
-        </div>
       </div>
-    </UCard>
+
+      <div>
+        <label class="mb-1 block font-semibold">
+          3. Provide additional comments (optional)
+        </label>
+
+        <UTextarea
+          v-model="evaluations[currentPage][groupIndex].additionalComments"
+          class="w-full"
+        />
+      </div>
+    </div>
+  </div>
+</UCard>
+
 
     <UCard
       v-if="currentPage === 2"
       class="space-y-8 bg-gray-50 bg-white px-2 pt-6"
     >
       <div class="mb-4 text-center text-xl font-bold">Overall Evaluation</div>
-
+<p class="text-base">Provide an overall evaluation of this DMP below. 
+</p>
       <!-- Question 1 -->
       <div class="mb-6 flex gap-x-8">
         <div class="w-1/2">
@@ -389,7 +398,7 @@ async function saveAllEvaluations() {
       <div class="flex gap-x-8">
         <div class="w-1/2">
           <label class="w-3/4 font-semibold">
-            2. Who do you think wrote this DMP?
+            2. If you had to guess, would you think this DMP was more likely to have been written by a human or by an LLM?
             <span class="text-red-500">*</span>
           </label>
         </div>
