@@ -34,3 +34,37 @@ model User {
 
     @@index([emailAddress])
 }
+
+model BackgroundInfo {
+  id           String   @id @default(cuid())
+  participantId String  // pid from URL
+
+  field               String
+  roles               String[]
+  otherRole           String?
+  roleDuration        String
+  dmpCount            String
+  dmpReviewFrequency  String
+  dmsFamiliarity      String
+  aiUsage             String
+  aiComfort           String
+  aiAttitude          String
+  additionalComments  String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([participantId])
+}
+
+model Evaluation {
+  id                      String   @id @default(cuid())
+  participantId           String
+  dmpName                 String
+  evaluations             Json
+  overallAuthorshipGuess  String?
+  overallSatisfaction     Int?
+
+  @@unique([participantId, dmpName]) // unique per participant & DMP
+}
+

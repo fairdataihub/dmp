@@ -51,26 +51,29 @@ function goToEvaluation() {
   router.push("/app/evaluation");
 }
 
-function goBack() {
+async function goBack() {
   if (currentDmpIndex.value === 0) {
     router.push("/app/background");
   } else {
     currentDmpIndex.value--;
-    const currentPage = useState<number>("currentPage");
 
-    currentPage.value = 2; // Last page (page 3) of evaluation
+    // Wait for markdown to load
+    await loadDmpMd(currentDmpIndex.value);
+
+    // Then assign it
+    dmpState.value = parsedElements.value;
+
+    const currentPage = useState<number>("currentPage");
+    currentPage.value = 2;
+
     router.push("/app/evaluation");
   }
 }
 
-const driveFileIds = [
-  "1jzuapwu4uWVP4bOzm1GaIxURa9Dw7Yzw",
-  "1lAME9LXLO0TagJ4qlOjD8O9t28TMMp7x",
-  "1h0uuGjjIwvc5Z5tqUuGevnJodMlMmn1S",
-];
+const driveFileIds = useState<string[]>("driveFileIds");
 
 const pdfPath = computed(() => {
-  const id = driveFileIds[currentDmpIndex.value];
+  const id = driveFileIds.value[currentDmpIndex.value];
 
   return id ? `https://drive.google.com/uc?export=download&id=${id}` : "";
 });
@@ -91,11 +94,11 @@ const dmpOrdinal = computed(() => {
 
       <p class="px-4 text-center text-lg">
         <template v-if="currentDmpIndex === 0">
-          You will now evaluate three DMPs that have been assigned
-          to you.
+          You will now evaluate three DMPs that have been assigned to you.
         </template>
         Click below to download the {{ dmpOrdinal }} DMP and read it fully
-        before continuing to the evaluation. You will also see the text of each section again as you rate them.
+        before continuing to the evaluation. You will also see the text of each
+        section again as you rate them.
       </p>
 
       <div class="mt-4 text-center">

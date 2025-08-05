@@ -4,6 +4,7 @@ import { useRouter, useState } from "#imports";
 import type { DmpElement } from "~/server/utils/splitMdByElements";
 
 const router = useRouter();
+const route = useRoute();
 const toast = useToast();
 
 const currentDmpIndex = useState<number>("dmpIndex");
@@ -73,7 +74,7 @@ const fixedGroups = computed(() => {
   const ele6 = ele6Index !== -1 ? groups.splice(ele6Index, 1)[0] : null;
 
   // Now paginate rest in chunks of 3
-  const paginated: typeof groupedElements.value[] = [];
+  const paginated: (typeof groupedElements.value)[] = [];
   for (let i = 0; i < groups.length; i += 3) {
     paginated.push(groups.slice(i, i + 3));
   }
@@ -84,7 +85,6 @@ const fixedGroups = computed(() => {
 
   return paginated;
 });
-
 
 const currentElements = computed(
   () => fixedGroups.value[currentPage.value] || [],
@@ -102,14 +102,6 @@ const errorTypes = [
   "Other--Please mention in comments",
   "None--No errors seen",
 ];
-
-function globalIndex(page: number, localIndex: number): number {
-  const flatIndex = fixedGroups.value
-    .slice(0, page)
-    .reduce((sum, group) => sum + group.length, 0);
-
-  return flatIndex + localIndex;
-}
 
 function createBlankEvaluation(): any[][] {
   return fixedGroups.value.map((group) =>
@@ -177,15 +169,18 @@ function nextPage() {
   saveCurrentEvaluation();
 
   if (currentPage.value === fixedGroups.value.length - 1) {
-    // We're on page 3
+    // We're on last page of the current DMP
     saveOverallEvaluation();
 
+    // Save this DMP immediately
+    saveCurrentDmpEvaluation();
+
     if (dmpIndex.value < assignedDmps.value.length - 1) {
-      dmpIndex.value++; // Next DMP
+      dmpIndex.value++; // Move to next DMP
       currentPage.value = 0;
       router.push("/app/preview");
     } else {
-      onSubmitClick(); // 🔥 Show modal!
+      router.push("/app/thank-you");
     }
   } else {
     currentPage.value++;
@@ -222,53 +217,53 @@ function flattenedIndex(groupIndex: number, subIndex: number): number {
   return index;
 }
 
-
 const isLastPageAndLastDmp = computed(
   () =>
     currentPage.value === fixedGroups.value.length - 1 &&
     dmpIndex.value === assignedDmps.value.length - 1,
 );
 
-const open = ref(false);
-
-function onSubmitClick() {
-  open.value = true;
-}
-
-async function confirmSubmit() {
-  open.value = false;
-  await saveAllEvaluations();
-}
-
-async function saveAllEvaluations() {
+async function saveCurrentDmpEvaluation() {
   try {
-    const flatElements = dmpState.value;
-    const flatEvaluations = evaluations.value.flatMap((group) => group);
-    const dmpName = assignedDmps.value[dmpIndex.value];
+    const participantId = "test-participant";
+    const index = dmpIndex.value;
 
-    const res = await $fetch("/api/dmp/save-evaluation", {
-      body: {
-        dmpName,
-        elements: flatElements,
-        evaluations: flatEvaluations,
-        overallAuthorshipGuess: overallAuthorshipGuess.value,
-        overallSatisfaction: overallSatisfaction.value,
-      },
+    saveCurrentEvaluation();
+    saveOverallEvaluation();
+
+    const dmpName = assignedDmps.value[index];
+    const dmpEvals = evaluationsPerDmp.value[index] || [];
+
+    // dmpEvals is [page][group][evaluation], fixedGroups is [page][group]
+    const evalArray = dmpEvals.flatMap((pageGroups, pageIndex) =>
+      pageGroups.map((ev, groupIndex) => ({
+        elementTitle: fixedGroups.value[pageIndex][groupIndex]?.title || "",
+        satisfactionScore: ev.satisfactionScore ?? null,
+        selectedErrors: ev.selectedErrors ?? [],
+        additionalComments: ev.additionalComments ?? null,
+      })),
+    );
+
+    const payload = {
+      participantId,
+      dmpEvaluations: [
+        {
+          dmpName,
+          evaluations: evalArray,
+          overallAuthorshipGuess:
+            overallEvaluationsPerDmp.value[index]?.authorship ?? null,
+          overallSatisfaction:
+            overallEvaluationsPerDmp.value[index]?.satisfaction ?? null,
+        },
+      ],
+    };
+
+    await $fetch("/api/dmp/save-evaluation", {
       method: "POST",
+      body: payload,
     });
-
-    toast.add({
-      title: "Saved",
-      description: res.message || "Evaluation results saved successfully.",
-    });
-
-    router.push("/app/thank-you");
   } catch (error) {
     console.error("Save failed:", error);
-    toast.add({
-      title: "Error",
-      description: "Failed to save evaluations. Please try again.",
-    });
   }
 }
 </script>
@@ -276,7 +271,11 @@ async function saveAllEvaluations() {
 <template>
   <div v-if="currentElements.length" class="mt-10 space-y-6">
     <div class="mb-4 text-lg text-gray-700">
-      <strong>DMP #{{ currentDmpIndex + 1 }} – Section-wise Evaluation ({{ currentPage + 1 }}/3)</strong>
+      <strong
+        >DMP #{{ currentDmpIndex + 1 }} – Section-wise Evaluation ({{
+          currentPage + 1
+        }}/3)</strong
+      >
     </div>
 
     <h1>
@@ -284,91 +283,90 @@ async function saveAllEvaluations() {
       is provided again to facilitate your evaluation.
     </h1>
 
-<UCard
-  v-for="(group, groupIndex) in currentElements"
-  :key="groupIndex"
-  class="bg-gray-50 bg-white p-4"
->
-  <div v-if="evaluations[currentPage]?.[groupIndex]" class="flex gap-6">
-    <div class="w-1/2">
-      <h3 class="mb-2 text-xl font-semibold text-gray-800">
-        {{ group.title }}
-      </h3>
+    <UCard
+      v-for="(group, groupIndex) in currentElements"
+      :key="groupIndex"
+      class="bg-gray-50 bg-white p-4"
+    >
+      <div v-if="evaluations[currentPage]?.[groupIndex]" class="flex gap-6">
+        <div class="w-1/2">
+          <h3 class="mb-2 text-xl font-semibold text-gray-800">
+            {{ group.title }}
+          </h3>
 
-      <div
-        v-for="(subEl, subIndex) in group.group"
-        :key="subIndex"
-        class="mb-4"
-      >
-        <div class="text-base font-semibold text-gray-800">
-          {{ subEl.subtitle }}
+          <div
+            v-for="(subEl, subIndex) in group.group"
+            :key="subIndex"
+            class="mb-4"
+          >
+            <div class="text-base font-semibold text-gray-800">
+              {{ subEl.subtitle }}
+            </div>
+
+            <div class="mb-2 text-sm text-gray-600 italic">
+              ({{ helpTexts[flattenedIndex(groupIndex, subIndex)] }})
+            </div>
+
+            <div
+              class="text-base whitespace-pre-wrap"
+              v-html="formatContent(subEl.content)"
+            />
+          </div>
         </div>
 
-        <div class="mb-2 text-sm italic text-gray-600">
-          ({{ helpTexts[flattenedIndex(groupIndex, subIndex)] }})
+        <div class="w-1/2 space-y-4">
+          <!-- Same evaluation UI for the entire group -->
+          <div class="flex items-center space-x-4">
+            <label class="w-3/4 font-semibold">
+              1. How satisfied are you with the response to this Element?
+              <span class="text-red-500">*</span>
+            </label>
+
+            <USelect
+              v-model="evaluations[currentPage][groupIndex].satisfactionScore"
+              :items="scoreOptions"
+              class="w-45"
+            />
+          </div>
+
+          <div>
+            <label class="mb-2 block font-semibold">
+              2. What type of errors did you find, if any (select all that
+              apply)?
+              <span class="text-red-500">*</span>
+            </label>
+
+            <div class="flex items-start gap-x-4">
+              <USelect
+                v-model="evaluations[currentPage][groupIndex].selectedErrors"
+                :items="errorTypes"
+                multiple
+                placeholder="Select error types"
+                class="w-full"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label class="mb-1 block font-semibold">
+              3. Provide additional comments (optional)
+            </label>
+
+            <UTextarea
+              v-model="evaluations[currentPage][groupIndex].additionalComments"
+              class="w-full"
+            />
+          </div>
         </div>
-
-        <div
-          class="text-base whitespace-pre-wrap"
-          v-html="formatContent(subEl.content)"
-        />
       </div>
-    </div>
-
-    <div class="w-1/2 space-y-4">
-      <!-- Same evaluation UI for the entire group -->
-      <div class="flex items-center space-x-4">
-        <label class="w-3/4 font-semibold">
-          1. How satisfied are you with the response to this Element?
-          <span class="text-red-500">*</span>
-        </label>
-
-        <USelect
-          v-model="evaluations[currentPage][groupIndex].techCorrectScore"
-          :items="scoreOptions"
-          class="w-45"
-        />
-      </div>
-
-      <div>
-        <label class="mb-2 block font-semibold">
-           2. What type of errors did you find, if any (select all that apply)?
-          <span class="text-red-500">*</span>
-        </label>
-
-        <div class="flex items-start gap-x-4">
-          <USelect
-            v-model="evaluations[currentPage][groupIndex].selectedErrors"
-            :items="errorTypes"
-            multiple
-            placeholder="Select error types"
-            class="w-full"
-          />
-        </div>
-      </div>
-
-      <div>
-        <label class="mb-1 block font-semibold">
-          3. Provide additional comments (optional)
-        </label>
-
-        <UTextarea
-          v-model="evaluations[currentPage][groupIndex].additionalComments"
-          class="w-full"
-        />
-      </div>
-    </div>
-  </div>
-</UCard>
-
+    </UCard>
 
     <UCard
       v-if="currentPage === 2"
       class="space-y-8 bg-gray-50 bg-white px-2 pt-6"
     >
       <div class="mb-4 text-center text-xl font-bold">Overall Evaluation</div>
-<p class="text-base">Provide an overall evaluation of this DMP below. 
-</p>
+      <p class="text-base">Provide an overall evaluation of this DMP below.</p>
       <!-- Question 1 -->
       <div class="mb-6 flex gap-x-8">
         <div class="w-1/2">
@@ -398,7 +396,8 @@ async function saveAllEvaluations() {
       <div class="flex gap-x-8">
         <div class="w-1/2">
           <label class="w-3/4 font-semibold">
-            2. If you had to guess, would you think this DMP was more likely to have been written by a human or by an LLM?
+            2. If you had to guess, would you think this DMP was more likely to
+            have been written by a human or by an LLM?
             <span class="text-red-500">*</span>
           </label>
         </div>
@@ -435,24 +434,8 @@ async function saveAllEvaluations() {
         class="flex w-30 items-center justify-center"
         @click="nextPage"
       >
-        {{ isLastPageAndLastDmp ? "Submit" : "Next" }}
+        {{ isLastPageAndLastDmp ? "Complete" : "Next" }}
       </UButton>
     </div>
-
-    <UModal v-model:open="open" trap-focus>
-      <template #content>
-        <div class="w-120 max-w-full p-6">
-          <p class="mb-6">Are you sure you want to submit your evaluations?</p>
-
-          <div class="flex justify-end space-x-4">
-            <UButton color="primary" @click="confirmSubmit"
-              >Yes, Submit</UButton
-            >
-
-            <UButton color="neutral" @click="open = false">Cancel</UButton>
-          </div>
-        </div>
-      </template>
-    </UModal>
   </div>
 </template>

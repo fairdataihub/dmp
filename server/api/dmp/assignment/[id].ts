@@ -1,10 +1,13 @@
 import { parse } from "csv-parse/sync";
 
 interface AssignmentRow {
-  DMP1: string;
-  DMP2: string;
-  DMP3: string;
   "Participant number": string;
+  DMP1: string;
+  DMP1_Link: string;
+  DMP2: string;
+  DMP2_Link: string;
+  DMP3: string;
+  DMP3_Link: string;
 }
 
 export default defineEventHandler(async (event) => {
@@ -18,7 +21,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const baseUrl = process.env.BASE_URL || "http://localhost:3000";
-  const csvUrl = `${baseUrl}/assets/dmp/participant_dmp_assignments.csv`;
+  const csvUrl = `${baseUrl}/assets/dmp/participant_dmp_encrypt.csv`;
 
   const res = await fetch(csvUrl);
 
@@ -45,7 +48,12 @@ export default defineEventHandler(async (event) => {
   }
 
   return {
-    dmps: [participant.DMP1, participant.DMP2, participant.DMP3],
     participantId: id,
+    dmps: [participant.DMP1, participant.DMP2, participant.DMP3],
+    driveFileIds: [
+      participant.DMP1_Link,
+      participant.DMP2_Link,
+      participant.DMP3_Link,
+    ],
   };
 });
