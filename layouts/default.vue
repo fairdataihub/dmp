@@ -11,7 +11,7 @@ const sidebarCollapsed = ref(false);
       <DashboardHeader @update:sidebar-collapsed="sidebarCollapsed = $event" />
 
       <!-- Page Content -->
-      <div class="mt-18 w-full px-6">
+      <div class="mt-5 w-full px-6">
         <slot />
       </div>
     </main>

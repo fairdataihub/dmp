@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE "PidAssignment" ALTER COLUMN "assignedAt" DROP NOT NULL,
+ALTER COLUMN "assignedAt" DROP DEFAULT,
+ALTER COLUMN "lastSeen" DROP NOT NULL,
+ALTER COLUMN "lastSeen" DROP DEFAULT;
