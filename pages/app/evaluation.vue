@@ -4,9 +4,6 @@ import { useRouter, useState } from "#imports";
 import type { DmpElement } from "~/server/utils/splitMdByElements";
 
 const router = useRouter();
-const route = useRoute();
-const toast = useToast();
-
 const currentDmpIndex = useState<number>("dmpIndex");
 const overallSatisfaction = ref<number | null>(null);
 const overallAuthorshipGuess = ref<string | null>(null);
@@ -53,6 +50,7 @@ const groupedElements = computed(() => {
 
   for (const el of elements) {
     const existing = groups.find((g) => g.title === el.title);
+
     if (existing) {
       existing.group.push(el);
     } else {
@@ -75,6 +73,7 @@ const fixedGroups = computed(() => {
 
   // Now paginate rest in chunks of 3
   const paginated: (typeof groupedElements.value)[] = [];
+
   for (let i = 0; i < groups.length; i += 3) {
     paginated.push(groups.slice(i, i + 3));
   }
@@ -165,22 +164,36 @@ function formatContent(content: string) {
     .replace(/\s*\n\s*/g, " "); // collapse line breaks inside paragraphs
 }
 
-function nextPage() {
+async function nextPage() {
   saveCurrentEvaluation();
 
   if (currentPage.value === fixedGroups.value.length - 1) {
     // We're on last page of the current DMP
     saveOverallEvaluation();
+    await saveCurrentDmpEvaluation();
 
-    // Save this DMP immediately
-    saveCurrentDmpEvaluation();
+    if (isLastPageAndLastDmp.value) {
+      // Call API to mark completed
+      try {
+        const response = await $fetch("/api/dmp/complete-survey", {
+          method: "POST",
+          // If you want to send participantId or PID, you can send here
+          // but I assume the server reads PID from cookie
+        });
 
-    if (dmpIndex.value < assignedDmps.value.length - 1) {
+        if (response.error) {
+          console.error("Failed to mark survey completed:", response.error);
+          // You can handle error here (show message etc.)
+        }
+      } catch (error) {
+        console.error("API error:", error);
+      }
+
+      router.push("/app/thank-you");
+    } else {
       dmpIndex.value++; // Move to next DMP
       currentPage.value = 0;
       router.push("/app/preview");
-    } else {
-      router.push("/app/thank-you");
     }
   } else {
     currentPage.value++;
@@ -290,7 +303,7 @@ async function saveCurrentDmpEvaluation() {
     >
       <div v-if="evaluations[currentPage]?.[groupIndex]" class="flex gap-6">
         <div class="w-1/2">
-          <h3 class="mb-2 text-xl font-semibold text-gray-800">
+          <h3 class="mb-2 text-xl font-bold text-gray-800">
             {{ group.title }}
           </h3>
 
@@ -299,18 +312,21 @@ async function saveCurrentDmpEvaluation() {
             :key="subIndex"
             class="mb-4"
           >
-            <div class="text-base font-semibold text-gray-800">
+            <div class="text-base font-bold text-gray-800">
               {{ subEl.subtitle }}
             </div>
 
-            <div class="mb-2 text-sm text-gray-600 italic">
+            <div class="mb-2 text-sm text-gray-700 italic">
               ({{ helpTexts[flattenedIndex(groupIndex, subIndex)] }})
             </div>
 
-            <div
-              class="text-base whitespace-pre-wrap"
-              v-html="formatContent(subEl.content)"
-            />
+            <div class="full-input">
+              <label>Evaluate this section</label>
+              <div
+                class="text-base whitespace-pre-wrap"
+                v-html="formatContent(subEl.content)"
+              />
+            </div>
           </div>
         </div>
 
@@ -325,7 +341,7 @@ async function saveCurrentDmpEvaluation() {
             <USelect
               v-model="evaluations[currentPage][groupIndex].satisfactionScore"
               :items="scoreOptions"
-              class="w-45"
+              class="w-55"
             />
           </div>
 
@@ -349,7 +365,7 @@ async function saveCurrentDmpEvaluation() {
 
           <div>
             <label class="mb-1 block font-semibold">
-              3. Provide additional comments (optional)
+              3. Provide additional comments (optional):
             </label>
 
             <UTextarea

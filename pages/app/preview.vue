@@ -64,6 +64,7 @@ async function goBack() {
     dmpState.value = parsedElements.value;
 
     const currentPage = useState<number>("currentPage");
+
     currentPage.value = 2;
 
     router.push("/app/evaluation");
@@ -86,39 +87,41 @@ const dmpOrdinal = computed(() => {
 </script>
 
 <template>
-  <UCard variant="subtle" class="bg-white">
-    <div class="px-60">
-      <div class="flex h-20 justify-center text-3xl">
-        <strong>Review</strong>
+  <div>
+    <UCard variant="subtle" class="bg-white">
+      <div class="px-60">
+        <div class="flex h-20 justify-center text-3xl">
+          <strong>Review</strong>
+        </div>
+
+        <p class="px-4 text-center text-lg">
+          <template v-if="currentDmpIndex === 0">
+            You will now evaluate three DMPs that have been assigned to you.
+          </template>
+          Click below to download the {{ dmpOrdinal }} DMP and read it fully
+          before continuing to the evaluation. You will also see the text of
+          each section again as you rate them.
+        </p>
+
+        <div class="mt-4 text-center">
+          <span class="inline-flex items-center gap-2 text-lg">
+            <UIcon name="i-lucide-file-down" class="text-blue-600" />
+            PDF Available:
+            <a
+              :href="pdfPath"
+              download
+              class="text-blue-600 underline"
+              target="_blank"
+              rel="noopener"
+            >
+              Download Now
+            </a>
+          </span>
+        </div>
       </div>
+    </UCard>
 
-      <p class="px-4 text-center text-lg">
-        <template v-if="currentDmpIndex === 0">
-          You will now evaluate three DMPs that have been assigned to you.
-        </template>
-        Click below to download the {{ dmpOrdinal }} DMP and read it fully
-        before continuing to the evaluation. You will also see the text of each
-        section again as you rate them.
-      </p>
-
-      <div class="mt-4 text-center">
-        <span class="inline-flex items-center gap-2 text-lg">
-          <UIcon name="i-lucide-file-down" class="text-blue-600" />
-          PDF Available:
-          <a
-            :href="pdfPath"
-            download
-            class="text-blue-600 underline"
-            target="_blank"
-            rel="noopener"
-          >
-            Download Now
-          </a>
-        </span>
-      </div>
-    </div>
-
-    <div class="mt-10 flex justify-between px-4">
+    <div class="mt-6 flex justify-between px-4">
       <UButton
         icon="i-lucide-arrow-left"
         color="primary"
@@ -139,5 +142,5 @@ const dmpOrdinal = computed(() => {
         Next
       </UButton>
     </div>
-  </UCard>
+  </div>
 </template>

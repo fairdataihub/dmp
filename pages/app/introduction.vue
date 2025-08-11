@@ -1,11 +1,46 @@
 <script setup lang="ts">
-const route = useRoute();
 const router = useRouter();
 
-const participantId = route.query.pid;
+const participantId = ref<string | null>(null);
+const surveyCompleted = ref(false);
 
-function goToNext() {
-  router.push(`/app/background?pid=${participantId}`);
+const pidCookie = useCookie<string | null>("pid", {
+  maxAge: 60 * 60 * 24 * 3, // 3 days
+});
+
+onMounted(async () => {
+  try {
+    // Step 1: Get PID from cookie or API
+    if (pidCookie.value) {
+      participantId.value = pidCookie.value;
+    } else {
+      const res = await fetch("/api/dmp/assign-pid");
+      const data = await res.json();
+
+      participantId.value = data.pid;
+      pidCookie.value = data.pid;
+    }
+
+    // Step 2: Check completion only after PID is available
+    if (participantId.value) {
+      const res = await $fetch<{ completed: boolean }>(
+        `/api/dmp/check-completion?pid=${participantId.value}`,
+      );
+
+      surveyCompleted.value = res.completed;
+
+      if (surveyCompleted.value) {
+        router.push("/app/thank-you");
+      }
+    }
+  } catch (error) {
+    console.error("Error during PID assignment or completion check:", error);
+  }
+});
+
+function goToNext(): void {
+  if (!participantId.value) return;
+  router.push(`/app/background?pid=${participantId.value}`);
 }
 </script>
 
@@ -48,7 +83,7 @@ function goToNext() {
 
             You will successively review
             <strong>three randomly assigned NIH DMPs</strong> and assess the
-            quality of each of their 12 sections based on standardized criteria,
+            quality of each of their 6 sections based on standardized criteria,
             including technical accuracy, completeness, and clarity. You may
             also provide qualitative feedback and point out any issues you
             observe. Each one may have been written by a human or an LLM, and
