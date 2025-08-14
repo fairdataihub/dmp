@@ -18,6 +18,7 @@ function saveOverallEvaluation() {
   };
 }
 
+const toast = useToast();
 const dmpState = useState<DmpElement[]>("dmpData");
 const dmpIndex = useState<number>("dmpIndex");
 const assignedDmps = useState<string[]>("assignedDmps");
@@ -149,10 +150,43 @@ watch(
   { immediate: true },
 );
 
+onMounted(() => {
+  // If the DMP data is empty, redirect to introduction page
+  if (!dmpState.value || !dmpState.value.length) {
+    router.replace('/app/introduction'); // replace so back button doesn't go here
+  }
+});
+
 function saveCurrentEvaluation() {
   evaluationsPerDmp.value[dmpIndex.value] = JSON.parse(
     JSON.stringify(evaluations.value),
   );
+}
+
+function validateCurrentPage(): boolean {
+  if (currentPage.value < fixedGroups.value.length - 1) {
+    for (let groupIndex = 0; groupIndex < currentElements.value.length; groupIndex++) {
+      const evalData = evaluations.value[currentPage.value][groupIndex];
+      if (!evalData.satisfactionScore || !evalData.selectedErrors?.length) {
+        toast.add({
+          title: 'Missing Required Fields',
+          description: 'Please complete all required fields before continuing.',
+          color: 'warning',
+        });
+        return false;
+      }
+    }
+  } else {
+    if (!overallSatisfaction.value || !overallAuthorshipGuess.value) {
+      toast.add({
+        title: 'Missing Required Fields',
+        description: 'Please complete all required fields before continuing.',
+        color: 'warning',
+      });
+      return false;
+    }
+  }
+  return true;
 }
 
 function formatContent(content: string) {
@@ -165,33 +199,34 @@ function formatContent(content: string) {
 }
 
 async function nextPage() {
+  if (!validateCurrentPage()) return;
+
   saveCurrentEvaluation();
 
   if (currentPage.value === fixedGroups.value.length - 1) {
-    // We're on last page of the current DMP
     saveOverallEvaluation();
     await saveCurrentDmpEvaluation();
 
     if (isLastPageAndLastDmp.value) {
-      // Call API to mark completed
       try {
-        const response = await $fetch("/api/dmp/complete-survey", {
-          method: "POST",
-          // If you want to send participantId or PID, you can send here
-          // but I assume the server reads PID from cookie
-        });
-
-        if (response.error) {
-          console.error("Failed to mark survey completed:", response.error);
-          // You can handle error here (show message etc.)
+        const response = await $fetch("/api/dmp/complete-survey", { method: "POST" });
+        if ("error" in response) {
+          toast.add({
+            title: 'Error',
+            description: response.error,
+            color: 'warning',
+          });
         }
       } catch (error) {
-        console.error("API error:", error);
+        toast.add({
+          title: 'Error',
+          description: 'API request failed.',
+          color: 'error',
+        });
       }
-
       router.push("/app/thank-you");
     } else {
-      dmpIndex.value++; // Move to next DMP
+      dmpIndex.value++;
       currentPage.value = 0;
       router.push("/app/preview");
     }
