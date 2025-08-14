@@ -106,11 +106,15 @@ function goToNext(): void {
           product development research, in accordance with ethical and
           regulatory standards.
         </p>
+
+        <p>
+          Your answers will be saved as you go to a new page.
+          You can go back and change answers at any time.  Once you submit
+          on the final page, your answers cannot be changed anymore.
+        </p>
       </div>
       <p class="bg-yellow-100 border border-yellow-300 text-yellow-800 mt-5 px-2 py-2 rounded">
-        <strong>Important:</strong> This survey must be completed in one sitting. If you close
-        the browser, refresh the page, or leave the survey before finishing, your progress will
-        not be saved and you may need to start over.
+        <strong>Important:</strong> This survey must be completed in one sitting.
       </p>
       <div class="mt-10 flex justify-center">
         <UButton color="primary" @click="goToNext"> Get Started </UButton>
