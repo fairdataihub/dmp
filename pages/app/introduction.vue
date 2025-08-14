@@ -92,12 +92,6 @@ function goToNext(): void {
         </ul>
 
         <p>
-          Your answers will be saved as you go to a new page. You can go back
-          and change answers at any time. Once you submit on the final page,
-          your answers cannot be changed anymore.
-        </p>
-
-        <p>
           Your participation plays a vital role in shaping the future of
           LLM-assisted research infrastructure. This study was determined to not
           meet the definition of human subjects research by the UC Davis IRB
