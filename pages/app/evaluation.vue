@@ -25,6 +25,7 @@ const assignedDmps = useState<string[]>("assignedDmps");
 const evaluationsPerDmp = useState<any[][][]>("evaluationsPerDmp", () => []);
 const evaluations = useState<any[][]>("evaluations", () => []);
 const currentPage = useState<number>("currentPage", () => 0);
+const participantId = ref<string | null>(null);
 const helpTexts = [
   // Page 1: ele1-a, b, c, ele2, ele3
   "Summarize the types and estimated amount of scientific data expected to be generated in the project",
@@ -151,6 +152,12 @@ watch(
 );
 
 onMounted(() => {
+  const pidCookie = useCookie<string | null>("pid");
+  participantId.value = pidCookie.value;
+
+  if (!participantId.value) {
+    console.error("No PID found in cookie!");
+  }
   // If the DMP data is empty, redirect to introduction page
   if (!dmpState.value || !dmpState.value.length) {
     router.replace('/app/introduction'); // replace so back button doesn't go here
@@ -273,7 +280,6 @@ const isLastPageAndLastDmp = computed(
 
 async function saveCurrentDmpEvaluation() {
   try {
-    const participantId = "test-participant";
     const index = dmpIndex.value;
 
     saveCurrentEvaluation();
@@ -293,7 +299,7 @@ async function saveCurrentDmpEvaluation() {
     );
 
     const payload = {
-      participantId,
+      participantId: participantId.value?.toString(),
       dmpEvaluations: [
         {
           dmpName,
