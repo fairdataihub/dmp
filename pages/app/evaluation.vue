@@ -91,7 +91,13 @@ const currentElements = computed(
   () => fixedGroups.value[currentPage.value] || [],
 );
 
-const scoreOptions = [1, 2, 3, 4, 5];
+const scoreOptions = [
+  "Very Dissatisfied",
+  "Dissatisfied",
+  "Neither dissatisfied or satisfied",
+  "Satisfied",
+  "Very Satisfied",
+];
 const errorTypes = [
   "Accuracy--Contains incorrect or misleading information, such as mentioning a repository that does not exist",
   "Completeness--Missing something that is required for the Element",
@@ -278,6 +284,26 @@ const isLastPageAndLastDmp = computed(
     dmpIndex.value === assignedDmps.value.length - 1,
 );
 
+function handleErrorSelectionChange(pageIndex, groupIndex, newSelection) {
+  const previousSelection = evaluations.value[pageIndex][groupIndex].selectedErrors || [];
+  const hasNone = newSelection.includes("None--No errors seen");
+  const previouslyHadNone = previousSelection.includes("None--No errors seen");
+  
+  if (hasNone && !previouslyHadNone) {
+    // "None" was just selected, clear all other selections
+    evaluations.value[pageIndex][groupIndex].selectedErrors = ["None--No errors seen"];
+  } else if (!hasNone && previouslyHadNone) {
+    // "None" was deselected, keep other selections
+    evaluations.value[pageIndex][groupIndex].selectedErrors = newSelection;
+  } else if (hasNone && newSelection.length > 1) {
+    // "None" is selected along with others, keep only "None"
+    evaluations.value[pageIndex][groupIndex].selectedErrors = ["None--No errors seen"];
+  } else {
+    // Normal selection without "None"
+    evaluations.value[pageIndex][groupIndex].selectedErrors = newSelection;
+  }
+}
+
 async function saveCurrentDmpEvaluation() {
   try {
     const index = dmpIndex.value;
@@ -372,30 +398,34 @@ async function saveCurrentDmpEvaluation() {
         </div>
 
         <div class="w-1/2 space-y-4">
-          <!-- Same evaluation UI for the entire group -->
-          <div class="flex items-center space-x-4">
-            <label class="w-3/4 font-semibold">
-              1. How satisfied are you with the response to this Element?
-              <span class="text-red-500">*</span>
+          <div class="flex flex-col space-y-2 w-full">
+            <label class="font-semibold flex">
+              <span class="mr-2 flex-shrink-0">1.</span>
+              <span class="flex-1">
+                How satisfied are you with the response to this Element?
+              </span>
             </label>
 
             <USelect
               v-model="evaluations[currentPage][groupIndex].satisfactionScore"
               :items="scoreOptions"
-              class="w-55"
+              class="w-96"
             />
           </div>
 
           <div>
-            <label class="mb-2 block font-semibold">
-              2. What type of errors did you find, if any (select all that
-              apply)?
-              <span class="text-red-500">*</span>
+            <label class="font-semibold flex">
+              <span class="mr-2 flex-shrink-0">2.</span>
+              <span class="flex-1">
+                What type of errors did you find, if any (select all that
+                apply)?
+              </span>
             </label>
 
             <div class="flex items-start gap-x-4">
               <USelect
-                v-model="evaluations[currentPage][groupIndex].selectedErrors"
+                :model-value="evaluations[currentPage][groupIndex].selectedErrors"
+                @update:model-value="(value) => handleErrorSelectionChange(currentPage, groupIndex, value)"
                 :items="errorTypes"
                 multiple
                 placeholder="Select error types"
@@ -405,8 +435,11 @@ async function saveCurrentDmpEvaluation() {
           </div>
 
           <div>
-            <label class="mb-1 block font-semibold">
-              3. Provide additional comments (optional):
+            <label class="font-semibold flex">
+              <span class="mr-2 flex-shrink-0">3.</span>
+              <span class="flex-1">
+                Provide additional comments (optional):
+              </span>
             </label>
 
             <UTextarea
@@ -423,13 +456,15 @@ async function saveCurrentDmpEvaluation() {
       class="space-y-8 bg-gray-50 bg-white px-2 pt-6"
     >
       <div class="mb-4 text-center text-xl font-bold">Overall Evaluation</div>
-      <p class="text-base">Provide an overall evaluation of this DMP below.</p>
+      <p class="text-base mb-6">Provide an overall evaluation of this DMP below.</p>
       <!-- Question 1 -->
       <div class="mb-6 flex gap-x-8">
         <div class="w-1/2">
-          <label class="w-3/4 font-semibold">
-            1. How satisfied were you with this DMP as a whole?
-            <span class="text-red-500">*</span>
+          <label class="font-semibold flex">
+            <span class="mr-2 flex-shrink-0">1.</span>
+            <span class="flex-1">
+              How satisfied were you with this DMP as a whole?
+            </span>
           </label>
         </div>
 
@@ -439,7 +474,7 @@ async function saveCurrentDmpEvaluation() {
             :items="[
               { label: 'Very Dissatisfied', value: 1 },
               { label: 'Dissatisfied', value: 2 },
-              { label: 'Neutral', value: 3 },
+              { label: 'Neither dissatisfied or satisfied', value: 3 },
               { label: 'Satisfied', value: 4 },
               { label: 'Very Satisfied', value: 5 },
             ]"
@@ -452,10 +487,12 @@ async function saveCurrentDmpEvaluation() {
       <!-- Question 2 -->
       <div class="flex gap-x-8">
         <div class="w-1/2">
-          <label class="w-3/4 font-semibold">
-            2. If you had to guess, would you think this DMP was more likely to
-            have been written by a human or by an LLM?
-            <span class="text-red-500">*</span>
+          <label class="font-semibold flex">
+            <span class="mr-2 flex-shrink-0">2.</span>
+            <span class="flex-1">
+              If you had to guess, would you think this DMP was more likely to
+              have been written by a human or by an LLM?
+            </span>
           </label>
         </div>
 
