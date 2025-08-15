@@ -466,6 +466,7 @@ async function saveCurrentDmpEvaluation() {
             <span class="mr-2 flex-shrink-0">1.</span>
             <span class="flex-1">
               How satisfied were you with this DMP as a whole?
+              <span class="text-red-500">*</span>
             </span>
           </label>
         </div>
@@ -494,6 +495,7 @@ async function saveCurrentDmpEvaluation() {
             <span class="flex-1">
               If you had to guess, would you think this DMP was more likely to
               have been written by a human or by an LLM?
+              <span class="text-red-500">*</span>
             </span>
           </label>
         </div>
