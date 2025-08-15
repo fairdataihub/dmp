@@ -89,34 +89,36 @@ const dmpOrdinal = computed(() => {
 <template>
   <div>
     <UCard variant="subtle" class="bg-white">
-      <div class="px-60">
-        <div class="flex h-20 justify-center text-3xl">
-          <strong>Review</strong>
-        </div>
+      <div class="px-4 sm:px-10 md:px-20 lg:px-40 xl:px-40">
+        <div class="px-60">
+          <div class="flex h-20 justify-center text-3xl">
+            <strong>Review</strong>
+          </div>
 
-        <p class="px-4 text-center text-lg">
-          <template v-if="currentDmpIndex === 0">
-            You will now evaluate three DMPs that have been assigned to you.
-          </template>
-          Click below to download the {{ dmpOrdinal }} DMP and read it fully
-          before continuing to the evaluation. You will also see the text of
-          each section again as you rate them.
-        </p>
+          <p class="px-4 text-center text-lg">
+            <template v-if="currentDmpIndex === 0">
+              You will now evaluate three DMPs that have been assigned to you.
+            </template>
+            Click below to download the {{ dmpOrdinal }} DMP and read it fully
+            before continuing to the evaluation. You will also see the text of
+            each section again as you rate them.
+          </p>
 
-        <div class="mt-4 text-center">
-          <span class="inline-flex items-center gap-2 text-lg">
-            <UIcon name="i-lucide-file-down" class="text-blue-600" />
-            PDF Available:
-            <a
-              :href="pdfPath"
-              download
-              class="text-blue-600 underline"
-              target="_blank"
-              rel="noopener"
-            >
-              Download Now
-            </a>
-          </span>
+          <div class="mt-4 text-center">
+            <span class="inline-flex items-center gap-2 text-lg">
+              <UIcon name="i-lucide-file-down" class="text-blue-600" />
+              PDF Available:
+              <a
+                :href="pdfPath"
+                download
+                class="text-blue-600 underline"
+                target="_blank"
+                rel="noopener"
+              >
+                Download Now
+              </a>
+            </span>
+          </div>
         </div>
       </div>
     </UCard>

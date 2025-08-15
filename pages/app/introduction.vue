@@ -106,10 +106,18 @@ function goToNext(): void {
           You can go back and change answers at any time.  Once you submit
           on the final page, your answers cannot be changed anymore.
         </p>
+
+        <p>
+          This survey is conducted jointly by teams from the California Medical 
+          Innovations Institute and the University of California Libraries. If you have any questions, 
+          feedback, or suggestions, please reach out to Nahid Zeinali at nzeinali@calmi2.org.
+        </p>
       </div>
-      <p class="bg-yellow-100 border border-yellow-300 text-yellow-800 mt-5 px-2 py-2 rounded">
-        <strong>Important:</strong> This survey must be completed in one sitting.
-      </p>
+      <div class="flex justify-center mt-2">
+        <p class="bg-yellow-100 border border-yellow-300 text-center text-yellow-800 mt-5 px-2 py-2 rounded w-200">
+          <strong>Important:</strong> This survey must be completed in one sitting.
+        </p>
+      </div>
       <div class="mt-10 flex justify-center">
         <UButton color="primary" @click="goToNext"> Get Started </UButton>
       </div>

@@ -127,7 +127,7 @@ async function submitAndNext() {
   <div>
     <UCard variant="subtle" class="bg-white">
       <div
-        class="mx-auto max-w-screen-xl px-4 sm:px-6 md:px-10 lg:px-16 xl:px-20"
+        class="mx-auto max-w-screen-xl px-4 sm:px-6 md:px-6 lg:px-8 xl:px-8"
       >
         <div class="flex h-20 justify-center text-3xl">
           <strong>Background Information</strong>
@@ -136,12 +136,15 @@ async function submitAndNext() {
         <Placeholder class="space-y-6">
           <p class="text-lg">Let’s start with some information about you.</p>
 
-          <strong class="mb-6 block text-lg"> Section 1: About You</strong>
+          <strong class="mt-16 block text-lg"> Section 1: About You</strong>
 
           <div class="flex flex-col gap-y-4 sm:flex-row sm:gap-x-8">
             <div class="w-full sm:w-1/2">
-              <label class="font-semibold">
-                1.1 What is your primary field or discipline?
+              <label class="font-semibold flex">
+                <span class="mr-2 flex-shrink-0">1.1.</span>
+                <span class="flex-1">
+                  What is your primary field or discipline?
+                </span>
               </label>
             </div>
             <div class="w-full sm:w-1/2">
@@ -155,8 +158,11 @@ async function submitAndNext() {
 
           <div class="flex flex-col gap-y-4 sm:flex-row sm:gap-x-8">
             <div class="w-full sm:w-1/2">
-              <label class="font-semibold">
-                1.2. What is your current role? (Select all that apply)
+              <label class="font-semibold flex">
+                <span class="mr-2 flex-shrink-0">1.2.</span>
+                <span class="flex-1">
+                  What is your current role? (Select all that apply)
+                </span>
               </label>
             </div>
             <div class="w-full sm:w-1/2">
@@ -180,8 +186,11 @@ async function submitAndNext() {
 
           <div class="flex flex-col gap-y-4 sm:flex-row sm:gap-x-8">
             <div class="w-full sm:w-1/2">
-              <label class="font-semibold">
-                1.3. How long have you been in your current or a similar role?
+              <label class="font-semibold flex">
+                <span class="mr-2 flex-shrink-0">1.3.</span>
+                <span class="flex-1">
+                  How long have you been in your current or a similar role?
+                </span>
               </label>
             </div>
             <div class="w-full sm:w-1/2">
@@ -194,15 +203,18 @@ async function submitAndNext() {
             </div>
           </div>
 
-          <strong class="mb-6 block text-lg"
+          <strong class="mt-16 block text-lg"
             >Section 2: Experience with Data Management Plans (DMPs)</strong
           >
 
           <div class="flex flex-col gap-y-4 sm:flex-row sm:gap-x-8">
             <div class="w-full sm:w-1/2">
-              <label class="font-semibold">
-                2.1. How many data management plans (DMPs) have you authored or
-                co-authored?
+              <label class="font-semibold flex">
+                <span class="mr-2 flex-shrink-0">2.1.</span>
+                <span class="flex-1">
+                  How many data management plans (DMPs) have you authored or
+                  co-authored?
+                </span>
               </label>
             </div>
             <div class="w-full sm:w-1/2">
@@ -217,9 +229,12 @@ async function submitAndNext() {
 
           <div class="flex flex-col gap-y-4 sm:flex-row sm:gap-x-8">
             <div class="w-full sm:w-1/2">
-              <label class="font-semibold"
-                >2.2. How often do you review DMPs?</label
-              >
+              <label class="font-semibold flex">
+                <span class="mr-2 flex-shrink-0">2.2.</span>
+                <span class="flex-1">
+                  How often do you review DMPs?
+                </span>
+              </label>
             </div>
             <div class="w-full sm:w-1/2">
               <USelect
@@ -233,9 +248,12 @@ async function submitAndNext() {
 
           <div class="flex flex-col gap-y-4 sm:flex-row sm:gap-x-8">
             <div class="w-full sm:w-1/2">
-              <label class="font-semibold">
-                2.3. How familiar are you with the NIH Data Management and
-                Sharing Plan (DMSP)?
+              <label class="font-semibold flex">
+                <span class="mr-2 flex-shrink-0">2.3.</span>
+                <span class="flex-1">
+                  How familiar are you with the NIH Data Management and
+                  Sharing Plan (DMSP)?
+                </span>
               </label>
             </div>
             <div class="w-full sm:w-1/2">
@@ -248,15 +266,17 @@ async function submitAndNext() {
             </div>
           </div>
 
-          <strong class="mb-6 block text-lg">
+          <strong class="mt-16 block text-lg">
             Section 3: Attitudes Toward AI</strong
           >
 
           <div class="flex flex-col gap-y-4 sm:flex-row sm:gap-x-8">
             <div class="w-full sm:w-1/2">
-              <label class="font-semibold">
-                3.1. Have you previously used AI tools (e.g., ChatGPT, Copilot)
-                to help write any part of a DMP?
+              <label class="font-semibold flex">
+                <span class="mr-2 flex-shrink-0">3.1.</span>
+                <span class="flex-1">
+                  How often have you used AI tools (e.g., ChatGPT, Copilot) to help write any part of a DMP?
+                </span>
               </label>
             </div>
             <div class="w-full sm:w-1/2">
@@ -271,8 +291,11 @@ async function submitAndNext() {
 
           <div class="flex flex-col gap-y-4 sm:flex-row sm:gap-x-8">
             <div class="w-full sm:w-1/2">
-              <label class="font-semibold">
-                3.2. How comfortable are you using AI to assist in DMP writing?
+              <label class="font-semibold flex">
+                <span class="mr-2 flex-shrink-0">3.2.</span>
+                <span class="flex-1">
+                  How comfortable are you using AI to assist in DMP writing?
+                </span>
               </label>
             </div>
             <div class="w-full sm:w-1/2">
@@ -287,12 +310,12 @@ async function submitAndNext() {
 
           <div class="flex flex-col gap-y-4 sm:flex-row sm:gap-x-8">
             <div class="w-full sm:w-1/2">
-              <label class="font-semibold">
-                3.3. What best describes your general attitude toward AI in
-                research workflows?
-                <span class="block pl-2"
-                  >(e.g., grant writing, literature review, data analysis)</span
-                >
+              <label class="font-semibold flex">
+                <span class="mr-2 flex-shrink-0">3.3.</span>
+                <span class="flex-1">
+                  What best describes your general attitude toward AI in
+                  research workflows (e.g., grant writing, literature review, data analysis)? 
+                </span>
               </label>
             </div>
             <div class="w-full sm:w-1/2">
@@ -307,9 +330,12 @@ async function submitAndNext() {
 
           <div class="flex flex-col gap-y-4 sm:flex-row sm:gap-x-8">
             <div class="w-full sm:w-1/2">
-              <label class="font-semibold">
-                3.4. Any additional comments about using generative AI for
-                drafting or reviewing DMPs?
+              <label class="font-semibold flex">
+                <span class="mr-2 flex-shrink-0">3.4.</span>
+                <span class="flex-1">
+                  Any additional comments about using generative AI for
+                  drafting or reviewing DMPs?
+                </span>
               </label>
             </div>
             <div class="w-full sm:w-1/2">
