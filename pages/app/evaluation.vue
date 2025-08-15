@@ -403,6 +403,7 @@ async function saveCurrentDmpEvaluation() {
               <span class="mr-2 flex-shrink-0">1.</span>
               <span class="flex-1">
                 How satisfied are you with the response to this Element?
+                <span class="text-red-500">*</span>
               </span>
             </label>
 
@@ -419,6 +420,7 @@ async function saveCurrentDmpEvaluation() {
               <span class="flex-1">
                 What type of errors did you find, if any (select all that
                 apply)?
+                <span class="text-red-500">*</span>
               </span>
             </label>
 
