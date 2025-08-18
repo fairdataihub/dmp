@@ -12,9 +12,10 @@ useHead({
 });
 
 useSeoMeta({
+  title: "DMP Chef", // The page title
   ogImage:
     "https://kalai.fairdataihub.org/api/generate?title=Hello&description=This%20is%20a%20Nuxt%20starter%20template&app=fairdataihub&org=fairdataihub",
-  titleTemplate: "%s - Nuxt Starter Template",
+  titleTemplate: "%s",
   twitterCard: "summary_large_image",
   twitterImage:
     "https://kalai.fairdataihub.org/api/generate?title=Hello&description=This%20is%20a%20Nuxt%20starter%20template&app=fairdataihub&org=fairdataihub",
