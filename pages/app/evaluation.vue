@@ -389,10 +389,9 @@ async function saveCurrentDmpEvaluation() {
 
             <div class="full-input">
               <label>Evaluate this section</label>
-              <div
-                class="text-base whitespace-pre-wrap"
-                v-html="formatContent(subEl.content)"
-              />
+              <div class="text-base whitespace-pre-wrap">
+                {{ subEl.content }}
+              </div>
             </div>
           </div>
         </div>
@@ -431,7 +430,13 @@ async function saveCurrentDmpEvaluation() {
                 :items="errorTypes"
                 multiple
                 placeholder="Select error types"
-                class="w-full"
+                class="w-96"
+                :ui="{
+                  // when the item is selected
+                  item: 'data-[state=checked]:bg-blue-100 data-[state=checked]:text-blue-800 aria-selected:bg-blue-100 aria-selected:text-blue-800',
+                  // ensure the label inherits the color too
+                  itemLabel: 'data-[state=checked]:text-blue-800 aria-selected:text-blue-800'
+                }"
               />
             </div>
           </div>
