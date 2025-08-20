@@ -14,11 +14,11 @@ useHead({
 useSeoMeta({
   title: "DMP Chef", // The page title
   ogImage:
-    "https://kalai.fairdataihub.org/api/generate?title=DMP%20Chef&description=A%20survey%20on%20AI-assisted%20Data%20Management%20Plans%20(DMPs).&app=fairdataihub&org=fairdataihub",
+    "https://kalai.fairdataihub.org/api/generate?title=DMP%20Chef%20Survey&description=A%20survey%20on%20AI-assisted%20Data%20Management%20Plans%20(DMPs).&app=dmp-chef&org=fairdataihub-cdl",
   titleTemplate: "%s",
   twitterCard: "summary_large_image",
   twitterImage:
-    "https://kalai.fairdataihub.org/api/generate?title=DMP%20Chef&description=A%20survey%20on%20AI-assisted%20Data%20Management%20Plans%20(DMPs).&app=fairdataihub&org=fairdataihub",
+    "https://kalai.fairdataihub.org/api/generate?title=DMP%20Chef%20Survey&description=A%20survey%20on%20AI-assisted%20Data%20Management%20Plans%20(DMPs).&app=dmp-chef&org=fairdataihub-cdl",
 });
 </script>
 
