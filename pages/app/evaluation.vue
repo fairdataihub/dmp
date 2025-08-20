@@ -46,6 +46,10 @@ const helpTexts = [
   "Describe how compliance with this Plan will be monitored and managed, frequency of oversight, and by whom at your institution (e.g., titles, roles)",
 ];
 
+watch(currentPage, () => {
+  window.scrollTo({ top: 0, behavior: "smooth" });
+});
+
 const groupedElements = computed(() => {
   const elements = dmpState.value || [];
   const groups: { title: string; group: DmpElement[] }[] = [];
@@ -387,8 +391,7 @@ async function saveCurrentDmpEvaluation() {
               ({{ helpTexts[flattenedIndex(groupIndex, subIndex)] }})
             </div>
 
-            <div class="full-input">
-              <label>Evaluate this section</label>
+            <div>
               <div class="text-base whitespace-pre-wrap">
                 {{ subEl.content }}
               </div>
@@ -430,12 +433,13 @@ async function saveCurrentDmpEvaluation() {
                 :items="errorTypes"
                 multiple
                 placeholder="Select error types"
-                class="w-96"
+                class="w-190"
                 :ui="{
                   // when the item is selected
                   item: 'data-[state=checked]:bg-blue-100 data-[state=checked]:text-blue-800 aria-selected:bg-blue-100 aria-selected:text-blue-800',
                   // ensure the label inherits the color too
-                  itemLabel: 'data-[state=checked]:text-blue-800 aria-selected:text-blue-800'
+                  itemLabel: 'data-[state=checked]:text-blue-800 aria-selected:text-blue-800',
+                  content: 'max-h-[400px] overflow-y-auto'
                 }"
               />
             </div>
