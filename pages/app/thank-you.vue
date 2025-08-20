@@ -13,6 +13,16 @@
         >
           DMP Tool blog
         </a>
+        and the
+        <a
+          href="https://fairdataihub-website-7o1xm2igo-fairdataihub.vercel.app/projects"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="text-blue-600 border-b-2 border-blue-600 pb-0.5"
+        >
+          DMP Chef
+        </a>
+        project page.
       </p>
     </div>
   </UCard>
