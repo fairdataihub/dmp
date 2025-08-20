@@ -53,16 +53,16 @@ function goToNext(): void {
 
       <div class="space-y-6 text-base leading-relaxed text-gray-800">
         <p>
-          Welcome to the NIH Data Management Plan (DMP) study survey! This
-          survey aims to evaluate the potential of large language models (LLMs)
-          in drafting high-quality, NIH-compliant Data Management Plans to
-          assist researchers submitting proposals to the NIH.
+          Welcome to a survey on AI-assisted Data Management Plans (DMPs)!
+          This survey aims to evaluate the potential of large language models
+          (LLMs) in drafting high-quality, compliant Data Management Plans to assist
+          researchers submitting proposals to federal funders.
         </p>
 
         <p>
           As part of your participation, you will review and provide feedback on
-          sample NIH DMPs, some human and some LLM generated. You will be guided
-          through the following pages:
+          sample NIH (National Institutes of Health) DMPs, some human and some
+          LLM generated. You will be guided through the following pages:
         </p>
 
         <ul class="list-disc space-y-4 pl-6">
@@ -109,7 +109,7 @@ function goToNext(): void {
 
         <p>
           This survey is conducted jointly by teams from the California Medical 
-          Innovations Institute and the University of California Libraries. If you have any questions, 
+          Innovations Institute and the California Digital Library. If you have any questions, 
           feedback, or suggestions, please reach out to Nahid Zeinali at nzeinali@calmi2.org.
         </p>
       </div>
