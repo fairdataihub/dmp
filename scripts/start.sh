@@ -25,14 +25,14 @@ set -e
 #   sleep 2
 # done
 
-echo "Running migration..."
+# echo "Running migration..."
 
 # Deploy any pending Prisma migrations to the database
 # This ensures the database schema is up to date before starting the app
 # The 'deploy' command is safe for production as it only applies pending migrations
-npx prisma migrate deploy
+# npx prisma migrate deploy
 
-echo "Migrations complete. Starting..."
+# echo "Migrations complete. Starting..."
 
 # Start the Node.js application server
 # exec replaces the current shell process with the node process
